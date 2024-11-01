@@ -1,35 +1,43 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { FileUploader } from '@aws-amplify/ui-react-storage';
 import './App.css'
+import '@aws-amplify/ui-react/styles.css';
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+
+  const [fileKey, setFileKey] = useState<string | null>(null);
+
+  const processFile = async (params: { file: File }) => {
+    const fileExtension = params.file.name.split('.').pop() || '';
+    const filebuffer = await params.file.arrayBuffer();
+    const hashBuffer = await window.crypto.subtle.digest('SHA-1', filebuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('');
+
+    const key = `${hashHex}.${fileExtension}`;
+    setFileKey(key);
+
+    return {
+      file: params.file,
+      key: key,
+    };
+  }
 
   return (
-    <>
+    <main className="flex min-h-screen flex-col items-center justify-center p-24 dark:text-white">
       <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+        <h1 className="text-3xl font-bold text-center mb-4">Mascota Espeluznante 🧟‍♀️</h1>
+        <form className="mb-4 self-center max-w-[500px] space-y-4">
+          <FileUploader
+            acceptedFileTypes={['image/*']}
+            path="public/"
+            maxFileCount={1}
+            processFile={processFile}
+          />
+          </form>
+        </div>
+    </main>
+  );
 }
-
-export default App
