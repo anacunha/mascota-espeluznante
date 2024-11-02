@@ -1,50 +1,134 @@
-# React + TypeScript + Vite
+# Spooky Pet App 🎃👻🧟🐶🐱
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Create your application
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```shell
+npm create vite@latest
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
-
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+```shell
+✔ Project name: … mascota-espeluznante
+✔ Select a framework: › React
+✔ Select a variant: › TypeScript
 ```
+
+```shell
+cd mascota-espeluznante
+npm install
+npm run dev
+```
+
+## Configure Amplify
+
+```shell
+npm create amplify@latest
+```
+
+## Deploy Cloud Sandbox
+
+```shell
+npx ampx sandbox
+```
+
+## Configure Amplify
+
+On your `main.tsx` file:
+
+```typescript
+import { Amplify } from 'aws-amplify';
+import outputs from '../amplify_outputs.json';
+
+Amplify.configure(outputs);
+```
+
+## [Setup Storage](https://docs.amplify.aws/react/build-a-backend/storage/set-up-storage/)
+
+Create a file `amplify/storage/resource.ts`:
+
+```typescript
+import { defineStorage } from '@aws-amplify/backend';
+
+export const storage = defineStorage({
+  name: 'mascotas',
+  access: (allow) => ({
+    'public/*': [
+      allow.guest.to(['write']),
+    ]
+  })
+});
+```
+
+Import your storage definition in your `amplify/backend.ts` file:
+
+```typescript
+import { storage } from './storage/resource'
+
+defineBackend({
+  ...
+  storage,
+});
+```
+
+## [Upload Files](https://docs.amplify.aws/javascript/build-a-backend/storage/upload-files/)
+
+Use Amplify UI component [FileUploader](https://ui.docs.amplify.aws/react/connected-components/storage/fileuploader
+) to upload files to S3 bucket:
+
+```shell
+npm add @aws-amplify/ui-react-storage
+```
+
+Use `FileUplaoder` on `src/App.tsx` file:
+
+```typescript
+import { useState } from 'react'
+import { FileUploader } from '@aws-amplify/ui-react-storage';
+import './App.css'
+import '@aws-amplify/ui-react/styles.css';
+
+export default function App() {
+
+  const [fileKey, setFileKey] = useState<string | null>(null);
+
+  const processFile = async (params: { file: File }) => {
+    const fileExtension = params.file.name.split('.').pop() || '';
+    const filebuffer = await params.file.arrayBuffer();
+    const hashBuffer = await window.crypto.subtle.digest('SHA-1', filebuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('');
+
+    const key = `${hashHex}.${fileExtension}`;
+    setFileKey(key);
+
+    return {
+      file: params.file,
+      key: key,
+    };
+  }
+
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center p-24 dark:text-white">
+      <div>
+        <h1 className="text-3xl font-bold text-center mb-4">Mascota Espeluznante 🧟‍♀️</h1>
+        <form className="mb-4 self-center max-w-[500px] space-y-4">
+          <FileUploader
+            acceptedFileTypes={['image/*']}
+            path="public/"
+            maxFileCount={1}
+            processFile={processFile}
+          />
+          </form>
+        </div>
+    </main>
+  );
+}
+
+```
+
+
+
+## [Setup a Function](https://docs.amplify.aws/react/build-a-backend/functions/set-up-function/)
+
+
