@@ -1,6 +1,6 @@
 # Spooky Pet App 🎃👻🧟🐶🐱
 
-## Create your application
+## [Create your application](https://vite.dev/guide/#scaffolding-your-first-vite-project)
 
 ```shell
 npm create vite@latest
