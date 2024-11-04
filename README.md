@@ -36,7 +36,9 @@ npx ampx sandbox
 
 ## [Configure Amplify](https://docs.amplify.aws/react/start/connect-to-aws-resources/)
 
-On your `main.tsx` file:
+By deploying the project to your cloud sandbox, Amplify will generate a [`amplify_outputs.json`](https://docs.amplify.aws/react/reference/amplify_outputs/) at the root of your project. This file contains the backend configuration of your project.
+
+The Amplify client libraries need the client config in order to use the library APIs to connect to backend resources. On your `main.tsx` file:
 
 ```typescript
 import { Amplify } from 'aws-amplify';
