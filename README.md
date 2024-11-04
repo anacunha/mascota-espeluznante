@@ -34,7 +34,7 @@ If you don't have the AWS CLI installed and an AWS profile configured on your ma
 npx ampx sandbox
 ```
 
-## Configure Amplify
+## [Configure Amplify](https://docs.amplify.aws/react/start/connect-to-aws-resources/)
 
 On your `main.tsx` file:
 
