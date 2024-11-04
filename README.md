@@ -18,7 +18,7 @@ npm install
 npm run dev
 ```
 
-## Configure Amplify
+## [Configure Amplify](https://docs.amplify.aws/react/start/manual-installation/)
 
 ```shell
 npm create amplify@latest
