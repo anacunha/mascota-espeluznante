@@ -24,7 +24,11 @@ npm run dev
 npm create amplify@latest
 ```
 
-## Deploy Cloud Sandbox
+## [Configure AWS for local development](https://docs.amplify.aws/react/start/account-setup/)
+
+If you don't have the AWS CLI installed and an AWS profile configured on your machine, do so by following [this guide](https://docs.amplify.aws/react/start/account-setup/).
+
+## [Deploy Cloud Sandbox](https://docs.amplify.aws/react/deploy-and-host/sandbox-environments/setup/)
 
 ```shell
 npx ampx sandbox
