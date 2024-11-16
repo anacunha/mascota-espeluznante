@@ -249,3 +249,21 @@ export const handler: Schema['generateCalaverita']['functionHandler'] = async (e
   return data.content[0].text;
 };
 ```
+
+Update the storage definition under `amplify/storage/resource.ts` so that our Lambda function can access the S3 bucket:
+
+```typescript
+import { defineStorage } from '@aws-amplify/backend';
+import { generateCalaverita } from '../functions/generate-calaverita/resource';
+
+export const storage = defineStorage({
+  name: 'mascotas',
+  access: (allow) => ({
+    'public/*': [
+      allow.guest.to(['write']),
+      allow.resource(generateCalaverita).to(['read']),
+    ]
+  })
+});
+```
+
