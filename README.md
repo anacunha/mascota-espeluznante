@@ -158,3 +158,94 @@ Install the `@aws-sdk/client-bedrock-runtime` so our function code can use the A
 ```shell
 npm install @aws-sdk/client-bedrock-runtime
 ```
+
+Create the handler for the function on `amplify/functions/generate-calaverita/handler.ts`:
+
+```typescript
+import { Schema } from '../../data/resource';
+import { BedrockRuntimeClient, InvokeModelCommand, InvokeModelCommandInput } from '@aws-sdk/client-bedrock-runtime';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { env } from '$amplify/env/generateCalaverita';
+
+// initialize bedrock runtime client
+const client = new BedrockRuntimeClient();
+const s3Client = new S3Client();
+
+async function getImageFromS3(bucket: string, key: string): Promise<string> {
+  try {
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: key,
+    });
+
+    const response = await s3Client.send(command);
+
+    // Convert the readable stream to a buffer
+    const chunks = [];
+    for await (const chunk of response.Body as any) {
+      chunks.push(chunk);
+    }
+    const buffer = Buffer.concat(chunks);
+
+    // Convert to base64
+    return buffer.toString('base64');
+  } catch (error) {
+    console.error('Error reading file from S3:', error);
+    throw error;
+  }
+}
+
+export const handler: Schema['generateCalaverita']['functionHandler'] = async (event) => {
+  // User prompt
+  const prompt = event.arguments.prompt;
+  const photo = event.arguments.photo;
+
+  // Get image from S3
+  const encoded_image = await getImageFromS3(
+    env.MASCOTAS_BUCKET_NAME,
+    `public/${photo}`
+  );
+
+  // Invoke model
+  const input = {
+    modelId: process.env.MODEL_ID,
+    contentType: 'application/json',
+    accept: 'application/json',
+    body: JSON.stringify({
+      anthropic_version: 'bedrock-2023-05-31',
+      system:
+        'Crea un nombre tenebroso de halloween y una calaverita literaria mexicana para una mascota en base a su nombre, signo del zodiaco, comida favorita y raza.',
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: prompt,
+            },
+            {
+              'type': 'image',
+              'source': {
+                'type': 'base64',
+                'media_type': 'image/jpeg',
+                'data': encoded_image
+              }
+            },
+          ],
+        },
+      ],
+      max_tokens: 1000,
+      temperature: 0.5,
+    }),
+  } as InvokeModelCommandInput;
+
+  const command = new InvokeModelCommand(input);
+
+  const response = await client.send(command);
+
+  // Parse the response and return the generated calaverita
+  const data = JSON.parse(Buffer.from(response.body).toString());
+
+  return data.content[0].text;
+};
+```
