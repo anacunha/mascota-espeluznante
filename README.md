@@ -133,8 +133,23 @@ export default function App() {
 
 ```
 
-
-
 ## [Setup a Function](https://docs.amplify.aws/react/build-a-backend/functions/set-up-function/)
 
+Create a new folder for the function definition under `amplify/functions/` with the function name. For instance `amplify/functions/generate-calaverita/`.
 
+Inside this folder, create a resource definition file `resource.ts`:
+
+```typescript
+import { defineFunction } from "@aws-amplify/backend";
+
+export const MODEL_ID = "anthropic.claude-3-5-sonnet-20240620-v1:0";
+
+export const generateCalaverita = defineFunction({
+    name: 'generateCalaverita',
+    entry: './handler.ts',
+    environment: {
+        MODEL_ID: MODEL_ID,
+    },
+    timeoutSeconds: 30,
+});
+```
