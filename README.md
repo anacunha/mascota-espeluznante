@@ -153,3 +153,8 @@ export const generateCalaverita = defineFunction({
     timeoutSeconds: 30,
 });
 ```
+Install the `@aws-sdk/client-bedrock-runtime` so our function code can use the Amazon Bedrock client.
+
+```shell
+npm install @aws-sdk/client-bedrock-runtime
+```
