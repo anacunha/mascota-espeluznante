@@ -267,3 +267,142 @@ export const storage = defineStorage({
 });
 ```
 
+Update `App.tsx:
+
+```typescript
+import type { Schema } from "../amplify/data/resource";
+import type { FormEvent } from 'react';
+import { useState } from 'react';
+import { generateClient } from 'aws-amplify/api';
+import { FileUploader } from '@aws-amplify/ui-react-storage';
+import { Input, Label, Flex, SelectField } from '@aws-amplify/ui-react';
+import './App.css'
+import '@aws-amplify/ui-react/styles.css';
+
+const client = generateClient<Schema>();
+
+interface IPet {
+  name: string;
+  sign: string;
+  food: string;
+  breed: string;
+}
+
+export default function App() {
+  const [pet, setPet] = useState<IPet>({name: '', sign: '', food: '', breed: ''});
+  const [fileKey, setFileKey] = useState<string | null>(null);
+  const [answer, setAnswer] = useState<string | null>(null);
+
+  const processFile = async (params: { file: File }) => {
+    const fileExtension = params.file.name.split('.').pop() || '';
+    const filebuffer = await params.file.arrayBuffer();
+    const hashBuffer = await window.crypto.subtle.digest('SHA-1', filebuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('');
+
+    const key = `${hashHex}.${fileExtension}`;
+    setFileKey(key);
+
+    return {
+      file: params.file,
+      key: key,
+    };
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setPet(prevPet => ({
+      ...prevPet,
+      [name]: value
+    }));
+  };
+
+  const sendPrompt = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!fileKey) {
+      alert('Please upload an image first');
+      return;
+    }
+
+    const prompt = `Nombre: ${pet.name}, Signo: ${pet.sign}, Comida Favorita: ${pet.food}, Raza: ${pet.breed}`;
+    const { data, errors } = await client.queries.generateCalaverita({
+      prompt,
+      photo: fileKey
+    });
+
+    if (!errors) {
+      setAnswer(data);
+      // Reset form after successful submission
+      setPet({name: '', sign: '', food: '', breed: ''});
+      setFileKey(null);
+    } else {
+      console.log(errors);
+    }
+  };
+
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center p-24 dark:text-white">
+      <div>
+        <h1 className="text-3xl font-bold text-center mb-4">Spooky Pet 🧟‍♀️</h1>
+        <form className="mb-4 self-center max-w-[500px] space-y-4" onSubmit={sendPrompt}>
+          <FileUploader
+            acceptedFileTypes={['image/*']}
+            path="public/"
+            maxFileCount={1}
+            processFile={processFile}
+          />
+
+          <Flex direction="column" gap="small">
+            <Label htmlFor="Nombre">Nombre:</Label>
+            <Input id="name" name="name" value={pet.name} onChange={handleInputChange} required />
+          </Flex>
+
+          <SelectField label="Signo" name="sign" value={pet.sign} onChange={handleInputChange} required>
+          <option value="">Selecciona un signo zodiacal</option>
+            <option value="ARIES">Aries</option>
+            <option value="TAURUS">Taurus</option>
+            <option value="GEMINI">Gemini</option>
+            <option value="CANCER">Cancer</option>
+            <option value="LEO">Leo</option>
+            <option value="VIRGO">Virgo</option>
+            <option value="LIBRA">Libra</option>
+            <option value="SCORPIO">Scorpio</option>
+            <option value="SAGITTARIUS">Sagittarius</option>
+            <option value="CAPRICORN">Capricorn</option>
+            <option value="AQUARIUS">Aquarius</option>
+            <option value="PISCES">Pisces</option>
+
+          </SelectField>
+
+          <Flex direction="column" gap="small">
+            <Label htmlFor="Comida">Comida favorita:</Label>
+            <Input id="food" name="food" value={pet.food} onChange={handleInputChange} required />
+          </Flex>
+
+          <Flex direction="column" gap="small">
+            <Label htmlFor="Raza">Raza:</Label>
+            <Input id="breed" name="breed" value={pet.breed} onChange={handleInputChange} required />
+          </Flex>
+
+          <button
+            disabled={!fileKey}
+            className="... disabled:bg-gray-400"
+          >
+            Generar Calaverita
+          </button>
+        </form>
+
+        <div className="text-center">
+          {answer && (
+            <pre className="whitespace-pre-wrap text-left bg-gray-800 p-4 rounded">
+              {answer}
+            </pre>
+          )}
+        </div>
+      </div>
+    </main>
+  );
+}
+```
